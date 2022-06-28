@@ -12,6 +12,7 @@ setup(name='PythonRAT',
       url='https://github.com/Chocapikk/PythonRAT',
       package_dir={'': 'src'},
       packages=find_packages(where='src'),
+      platforms='any',
       install_requires=[
          'click==7.0',
          'ptable==0.9.2',
