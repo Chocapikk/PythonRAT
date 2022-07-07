@@ -1,3 +1,4 @@
+export PATH=/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
 apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl libbz2-dev wget make gcc
 cd /usr/src
 wget https://www.python.org/ftp/python/3.7.11/Python-3.7.11.tgz || curl https://www.python.org/ftp/python/3.7.11/Python-3.7.11.tgz --output Python-3.7.11.tgz
