@@ -1,10 +1,9 @@
 import os
 import click
 import asyncio
+import hashlib
 import websockets
 import subprocess
-
-from utils import hash_sha256
 
 os.system("python3 -m pip install asyncio click websockets")
 
@@ -21,10 +20,14 @@ def execute_command(cmd: str):
         pass
     return ""
 
+class Utils:
+    def hash_sha256(password: str) -> str:
+        return hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest()
+
 
 class Client:
     def __init__(self, password: str, connection_interval: int):
-        self.pass_hash = hash_sha256(password)
+        self.pass_hash = Utils.hash_sha256(password)
         self.connection_interval = connection_interval
 
     async def connection_loop(self, uri: str):
