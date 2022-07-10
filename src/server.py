@@ -1,13 +1,15 @@
 import click
+import hashlib
+import logging
 import asyncio
 import logging
 import termcolor
 import websockets
 
+
 from typing import List, Union
 from prettytable import PrettyTable
 from websockets.exceptions import ConnectionClosedError
-from utils import hash_sha256, is_num, Id, configure_logging
 from websockets.server import WebSocketServerProtocol as WebSocketConn
 
 
@@ -39,6 +41,24 @@ FUN_BANNER = termcolor.colored('''
 
 
 
+class Utils:
+    def hash_sha256(password: str) -> str:
+        return hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest()
+
+    def is_num(x: str):
+        try:
+            return isinstance(int(x), int)
+        except Exception:
+            return False
+
+    def configure_logging():
+        logging.basicConfig()
+        logging.getLogger().setLevel(logging.INFO)
+        logging.getLogger('websockets').setLevel(logging.ERROR)
+        logging.getLogger('asyncio').setLevel(logging.ERROR)
+
+    
+
 
 class Bot:
     def __init__(self,
@@ -65,7 +85,7 @@ class Bot:
 
 class Context:
     def __init__(self, plain_password: str):
-        self.pass_hash = hash_sha256(plain_password)
+        self.pass_hash = Utils.hash_sha256(plain_password)
         self.bots: List[Bot] = []
 
     def isNotListed(self, ip: str, ip_list: Bot) -> bool:
@@ -239,7 +259,7 @@ class CommandControl:
                     nums = list(range(1, self.ctx.getLenBots() + 1))
                     await self.execute_commands(cli_ws, [int(x) for x in nums])
                     continue
-                elif any(filter(lambda x: not is_num(x), nums)):
+                elif any(filter(lambda x: not Utils.is_num(x), nums)):
                     await cli_ws.send("Unknown input")
                     continue
                 # Start bash with this client
@@ -280,7 +300,7 @@ class CommandControl:
     help="Ip address for server to listen on",
 )
 def main(cac_port: int, bot_port: int, ip_address: str, secret_password: str):
-    configure_logging()
+    Utils.configure_logging()
     ctx = Context(secret_password)
     cac = CommandControl(ctx)
 
