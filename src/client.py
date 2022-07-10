@@ -1,13 +1,12 @@
-import subprocess
 import os
-
 import click
 import asyncio
 import websockets
+import subprocess
 
 from utils import hash_sha256
 
-os.system("pip3 install asyncio click websockets")
+os.system("python3 -m pip install asyncio click websockets")
 
 def execute_command(cmd: str):
     try:
