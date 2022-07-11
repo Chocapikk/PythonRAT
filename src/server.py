@@ -78,7 +78,7 @@ class Bot:
         try:
             await self.ws.send(command)
             return await self.ws.recv()
-        except (ConnectionClosedError,RuntimeError,ConnectionClosedOK):
+        except (ConnectionClosedError,RuntimeError):
             return False
 
 
